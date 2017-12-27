@@ -1,10 +1,13 @@
 package io.droidninja.rxtodo;
 
+import io.reactivex.functions.Consumer;
+
 /**
  * Created by Zeeshan Shabbir on 12/26/2017.
  */
 
-public class TodoListFilter implements TodoListener {
+@Deprecated
+public class TodoListFilter implements Consumer<TodoList> {
 
     public static final int ALL = 0;
     public static final int INCOMPLETE = 1;
@@ -49,9 +52,14 @@ public class TodoListFilter implements TodoListener {
         }
     }
 
-    @Override
+   /* @Override
     public void onTodoListChanged(TodoList updatedList) {
         list = updatedList;
+    }*/
+
+    @Override
+    public void accept(TodoList todoList) throws Exception {
+        list = todoList;
     }
 }
 

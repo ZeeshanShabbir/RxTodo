@@ -13,12 +13,18 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.Observable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.subjects.ReplaySubject;
+
 /**
  * Created by Zeeshan Shabbir on 12/24/2017.
  */
 
-public class TodoList {
-    private TodoListener todoListener;
+public class TodoList implements Consumer<Todo>{
+
+    private ReplaySubject<TodoList> notifier = ReplaySubject.create();
+
     private List<Todo> todoList;
 
     public TodoList() {
@@ -68,10 +74,6 @@ public class TodoList {
 
     }
 
-    public void setTodoListener(TodoListener todoListener) {
-        this.todoListener = todoListener;
-    }
-
     public int size() {
         return todoList.size();
     }
@@ -82,25 +84,49 @@ public class TodoList {
 
     public void add(Todo t) {
         todoList.add(t);
-        if (todoListener != null) {
+        notifier.onNext(this);
+        /*if (todoListener != null) {
             todoListener.onTodoListChanged(this);
-        }
+        }*/
     }
 
     public void remove(Todo t) {
         todoList.remove(t);
-        if (todoListener != null) {
+        notifier.onNext(this);
+        /*if (todoListener != null) {
             todoListener.onTodoListChanged(this);
-        }
+        }*/
     }
 
-    public void toggle(Todo t) {
+    private void toggle(Todo t) {
         Todo todo = todoList.get(todoList.indexOf(t));
         boolean curVal = todo.isCompleted;
         todo.isCompleted = !curVal;
-        if (todoListener != null) {
-            todoListener.onTodoListChanged(this);
+        notifier.onNext(this);
+    }
+
+    public List<Todo> getAll() {
+        return todoList;
+    }
+
+    public List<Todo> getIncomplete() {
+        List<Todo> incomplete = new ArrayList<>();
+        for (Todo t : todoList) {
+            if (!t.isCompleted) {
+                incomplete.add(t);
+            }
         }
+        return incomplete;
+    }
+
+    public List<Todo> getCompelete() {
+        List<Todo> complete = new ArrayList<>();
+        for (Todo t : todoList) {
+            if (t.isCompleted) {
+                complete.add(t);
+            }
+        }
+        return complete;
     }
 
 
@@ -133,4 +159,12 @@ public class TodoList {
         return json;
     }
 
+    public Observable<TodoList> asObserable() {
+        return notifier;
+    }
+
+    @Override
+    public void accept(Todo todo) throws Exception {
+        toggle(todo);
+    }
 }

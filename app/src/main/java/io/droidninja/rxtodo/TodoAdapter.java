@@ -8,21 +8,34 @@ import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 
+import com.jakewharton.rxbinding2.widget.RxCompoundButton;
+
+import org.reactivestreams.Subscription;
+
+import java.util.Collections;
+import java.util.List;
+
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
+
 /**
  * Created by Zeeshan Shabbir on 12/26/2017.
  */
 
-public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.TodoHolder> implements TodoListener {
+public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.TodoHolder> implements Consumer<List<Todo>> {
 
     LayoutInflater inflater;
 
+    Consumer<Todo> subscriber;
+
     TodoCompletedChangeListener todoChangeListener;
 
-    TodoList data = new TodoList();
+    List<Todo> data = Collections.EMPTY_LIST;
 
-    public TodoAdapter(Activity activity, TodoCompletedChangeListener listener) {
+    public TodoAdapter(Activity activity,  Consumer<Todo> subscriber) {
         inflater = LayoutInflater.from(activity);
-        todoChangeListener = listener;
+        this.subscriber = subscriber;
     }
 
     @Override
@@ -39,29 +52,32 @@ public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.TodoHolder> im
     public void onBindViewHolder(TodoHolder holder, int position) {
         final Todo todo = data.get(position);
         holder.checkbox.setText(todo.description);
-
-        // ensure existing listener is nulled out, setting the value causes a check changed listener callback
-        holder.checkbox.setOnCheckedChangeListener(null);
-
-        // set the current value, then setup the listener
         holder.checkbox.setChecked(todo.isCompleted);
-        holder.checkbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        holder.disposable = RxCompoundButton.checkedChanges(holder.checkbox).skip(1).map(new Function<Boolean, Todo>() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                todoChangeListener.onTodoCompletedChanged(todo);
+            public Todo apply(Boolean aBoolean) throws Exception {
+                return todo;
             }
-        });
+        }).subscribe(subscriber);
     }
 
     @Override
-    public void onTodoListChanged(TodoList updatedList) {
-        data = updatedList;
+    public void onViewDetachedFromWindow(TodoHolder holder) {
+        super.onViewDetachedFromWindow(holder);
+        holder.disposable.dispose();
+    }
+
+    @Override
+    public void accept(List<Todo> todos) throws Exception {
+        data = todos;
         notifyDataSetChanged();
     }
 
     public class TodoHolder extends RecyclerView.ViewHolder {
 
         public CheckBox checkbox;
+
+        public Disposable disposable;
 
         public TodoHolder(View itemView) {
             super(itemView);
