@@ -11,7 +11,7 @@ This repository contains 2 brances
   1. master [~~Rx~~Todo without rx](https://github.com/ZeeshanShabbir/RxTodo) 
   2. rxjava2-implemented [RxTodo with rx](https://github.com/ZeeshanShabbir/RxTodo/tree/rxjava2-implemented)
   
-#Contributors
+# Contributors
 
 + Zeeshan Shabbir <zeeshan.shabbir79@gmail.com>
 
